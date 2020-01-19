@@ -7,24 +7,9 @@ import pl.pojo.tester.api.ConstructorParameters;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 
 public final class Instantiable {
-
-    private static final List<Class<? extends AbstractObjectInstantiator>> INSTANTIATORS;
-
-    static {
-        INSTANTIATORS = new LinkedList<>();
-        INSTANTIATORS.add(UserDefinedConstructorInstantiator.class);
-        INSTANTIATORS.add(JavaTypeInstantiator.class);
-        INSTANTIATORS.add(CollectionInstantiator.class);
-        INSTANTIATORS.add(DefaultConstructorInstantiator.class);
-        INSTANTIATORS.add(EnumInstantiator.class);
-        INSTANTIATORS.add(ArrayInstantiator.class);
-        INSTANTIATORS.add(ProxyInstantiator.class);
-        INSTANTIATORS.add(BestConstructorInstantiator.class);
-    }
 
     private Instantiable() {
     }
@@ -40,16 +25,16 @@ public final class Instantiable {
     static AbstractObjectInstantiator forClass(final Class<?> clazz,
                                                final MultiValuedMap<Class<?>, ConstructorParameters> constructorParameters) {
         return instantiateInstantiators(clazz, constructorParameters).stream()
-                                                                     .filter(AbstractObjectInstantiator::canInstantiate)
-                                                                     .findAny()
-                                                                     .get();
+                .filter(AbstractObjectInstantiator::canInstantiate)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No instantiator found for class " + clazz.getName()));
     }
 
     private static List<AbstractObjectInstantiator> instantiateInstantiators(final Class<?> clazz,
                                                                              final MultiValuedMap<Class<?>, ConstructorParameters> constructorParameters) {
         final List<AbstractObjectInstantiator> instantiators = new ArrayList<>();
         try {
-            for (final Class<? extends AbstractObjectInstantiator> instantiator : INSTANTIATORS) {
+            for (final Class<? extends AbstractObjectInstantiator> instantiator : Instantiator.INSTANCE.INSTANTIATORS) {
                 final Constructor<? extends AbstractObjectInstantiator> constructor =
                         instantiator.getDeclaredConstructor(Class.class, MultiValuedMap.class);
                 constructor.setAccessible(true);
